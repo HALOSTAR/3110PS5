@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/repos/cs3110/!svn/ver/239/2012sp/hw/ps5/release/apps
+END
+buildToplevel.bat
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/repos/cs3110/!svn/ver/239/2012sp/hw/ps5/release/apps/buildToplevel.bat
+END
+apm.ml
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/repos/cs3110/!svn/ver/232/2012sp/hw/ps5/release/apps/apm.ml
+END
+util.ml
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/repos/cs3110/!svn/ver/232/2012sp/hw/ps5/release/apps/util.ml
+END
+inverted_index.mli
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/repos/cs3110/!svn/ver/232/2012sp/hw/ps5/release/apps/inverted_index.mli
+END
+apm.mli
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/repos/cs3110/!svn/ver/232/2012sp/hw/ps5/release/apps/apm.mli
+END
+util.mli
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/repos/cs3110/!svn/ver/232/2012sp/hw/ps5/release/apps/util.mli
+END
+inverted_index.ml
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/repos/cs3110/!svn/ver/232/2012sp/hw/ps5/release/apps/inverted_index.ml
+END
+main_apps.ml
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/repos/cs3110/!svn/ver/237/2012sp/hw/ps5/release/apps/main_apps.ml
+END
