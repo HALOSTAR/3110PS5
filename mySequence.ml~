@@ -100,91 +100,78 @@ let zip (s1,s2) =
   multi_join (multi_create f (length s1));
   b
 
-(* Construct an upside-down binary tree with counts,
-   and then another binary tree with indices.
-   tfArr is padded with false's so its length is a power of 2.
-   The algorithm computes indices for these fake elements, but they are trash
-   and not used because the corresponding tfArr element is false *)
+let half x =
+  let a = (float_of_int x) /. 2. in
+    if a < 1. then 0 else int_of_float (ceil a)
+
+(* -1 inter node; i>0 marks index in arr *)
 let filter f arr = 
-  let nearestPowerTwo n = 
-    let l = ceil (log (float_of_int n) /. log 2.) in
-      int_of_float (2. ** l) in
+  let newArray = map f arr in
   let count = ref Empty in
   let indices = ref Empty in
   let finalArray = ref (empty ()) in
-  let tfLength = nearestPowerTwo (length arr) in
-  let tfArr = Array.make tfLength false in
-  let tfTempArr = map f arr in
-  let f2 i = tfArr.(i) <- tfTempArr.(i) in
-  (* tfArr is power of two -> constructing binary trees much easier *)
-  multi_join (multi_create f2 (length arr));
 
   let createInitialTree i =
-    if tfArr.(i) then 
-      (match (!count) with 
-           Arr (a,_) -> a.(i) <- 1
-         | _ -> failwith "error1")
+    if newArray.(i) then 
+      (match (!count) with Arr (a,_) -> a.(i) <- (i,1))
     else () in
 
   let fillTree i = 
+    print_string "fillTree i=";print_int i;print_string "\n";
     match (!count) with
-        Arr (a, (Arr (a2,_))) -> a.(i) <- a2.(2*i) + a2.(2*i+1) 
-      | _ -> failwith "error2" in
+        Arr (a, (Arr (a2,_))) -> 
+          if (2*i+1) < (length a2) then 
+            a.(i) <- (-1, (snd (a2.(2*i))) + (snd (a2.(2*i+1))))
+          else
+            a.(i) <- (-1, (snd (a2.(2*i)))) in
 
-  (*left branch's indices will be (prevLow, prevHigh - numTrueOnRight)
-    right branch's indices will be (prevLow + numTrueOnLeft, prevHigh) *)
   let fillIndices i =
-    match (!count) with
-        Arr (c,_) -> (
-          match (!indices) with
-              Arr (currIndices, (Arr (prevIndices,_))) ->
-                (let (low,high) = prevIndices.(i) in
-                   currIndices.(2*i) <- (low, high - c.(2*i+1));
-                   currIndices.(2*i+1) <- (low + c.(2*i), high))
-            | _ -> failwith "error3")
-      | _ -> failwith "error7" in  
-                  
+    print_string "fillIndices i=";print_int i;print_string "\n";
+    let (Arr (c,_)) = (!count) in 
+    match (!indices) with
+        Arr (currLevel, (Arr (prevLevel,_))) -> 
+          (let (low,high) = prevLevel.(i) in
+           let currLeft = (low, high - (snd c.(i))) and
+               currRight = (high - (snd c.(i)) + 1, high) in
+             (currLevel.(2*i) <- currLeft;
+              currLevel.(2*i+1) <- currRight)) in
+
   let fillFinal i =
-    if tfArr.(i) then
-      (match (!indices) with 
-           Arr (a,_) -> (!finalArray).(fst a.(i)) <- arr.(i)
-         | _ -> failwith "error4")
-    else () in
+    let ind = match (!indices) with Arr(a,_) -> (fst a.(i)) in
+    (!finalArray).(ind) <- arr.(match (!count) with Arr(a,_) -> (fst a.(i))) in
 
-  let rec reconstruct n =
-    if n > tfLength then (* done *)
-      (multi_join (multi_create fillFinal (length arr)))
-    else (* keep going up *)
-      (indices := Arr (Array.make n (0,0), (!indices));
-       multi_join (multi_create fillIndices (n/2));
-       (match (!count) with 
-            Arr (_,b) -> count := b
-          | _ -> failwith "error5");
-       reconstruct (2*n)) in 
-   
-  let rec spawner n = 
-    if n = (-1) then (* initial counts *)
-      (count := Arr (Array.make tfLength 0, Empty);
-       multi_join (multi_create createInitialTree (length arr));
-       spawner (tfLength/2))
-    else if n = 0 then (* counting done, start reconstructing *)
-      (match (!count) with
+  let rec reconstruct n = 
+    if n < (length (!finalArray)) then
+      (indices := Arr ((Array.make (2*n) (0,0)), (!indices));
+       (match (!count) with Arr (a,b) -> count := b);
+       multi_join (multi_create fillIndices n);
+       reconstruct (2*n))
+    else 
+      (multi_join (multi_create fillFinal (length (!finalArray)))) in
+     
+  let rec spawner n =
+    (* gets initial list of counts *)
+    if n = (length arr) then 
+      (count := Arr ((Array.make n (0,0)), Empty);
+       multi_join (multi_create createInitialTree n);
+       spawner (half 2))
+    else if n = 0 then 
+      ((match (!count) with 
            Arr (a,b) -> 
-             finalArray := Array.make a.(0) (nth arr 0);
-             indices := Arr (Array.make 1 (0, a.(0)-1), Empty);
-             count := b;
-             reconstruct 2
-         | _ -> failwith "error6")
-    else (* keep counting *)
-      (count := Arr (Array.make n 0, (!count));
-       multi_join (multi_create fillTree n);
-       spawner (n/2)) in
-  spawner (-1);
+             (finalArray := Array.make (snd a.(0)) (nth arr 0);
+              count := b));
+        indices := Arr (Array.make 1 (0,(length (!finalArray))), Empty);
+        reconstruct 1)
+    else 
+     (count := Arr ((Array.make n (0,0)), (!count) );
+      multi_join (multi_create fillTree n);
+      spawner (half n))
+  in 
+  spawner (length arr);
   (!finalArray)
-  
-       
-             
-
+      
+    
+    
   
     
   
