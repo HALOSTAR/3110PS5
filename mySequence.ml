@@ -24,9 +24,7 @@ let cons item arr =
   ignore(multi_create f (length b));
   b
   
-let singleton item = 
-  let a = empty () in
-  cons item a
+let singleton item = Array.make 1 item
   
 let tabulate f n =
   let m = Mutex.create () in
@@ -40,8 +38,7 @@ let tabulate f n =
   multi_join (multi_create f2 n); 
   !b
 
-let nth = 
-  Array.get 
+let nth = Array.get 
 
 let split s i = 
   let res = (Array.make i s.(0), Array.make ((length s)-i) s.(0)) in
@@ -51,21 +48,6 @@ let split s i =
   let a = multi_create f (length s) in
   multi_join a;
   res
-
-(* Returns 'a * ('a array * 'a array)
-   First element is the middle of the sequence
-   second element are items to the left of middle
-   third element are items to the right of the middle *)
-let split_half s =
-  let i = (length s) / 2 in
-  let res = (Array.make i s.(0), Array.make ((length s)-i-1) s.(0)) in
-  let f j =  
-    if j < i then (fst res).(j) <- s.(j) 
-    else if j = i then ()
-    else (snd res).(j-i-1) <- s.(j) in 
-  let a = multi_create f (length s) in
-  multi_join a;
-  (i, res)
 
 let append s s2 = 
   let b = Array.make ((length s)+(length s2)) (nth s 0) in 
@@ -180,11 +162,30 @@ let filter f arr =
        multi_join (multi_create fillTree n);
        spawner (n/2)) in
   spawner (-1);
-  (!finalArray)
-  
-       
-             
-
-  
+  (!finalArray) 
+ 
+let half x = int_of_float (ceil ((float_of_int x) /. 2.)) 
+let reduce c b s =
+  let newLength = (length s) + 1 in
+  let workingArr = Array.make newLength b in
+  let workingArrCopy = Array.make newLength b in
+  let currMaxIndex = ref (newLength-1) in
+  multi_join (multi_create (fun i -> workingArrCopy.(i) <- s.(i)) (length s));
+  let f i =
+    if (2*i+1) > (!currMaxIndex) then (workingArr.(i) <- workingArrCopy.(2*i))
+    else (workingArr.(i) <- c workingArrCopy.(2*i) workingArrCopy.(2*i+1)) in
+  let rec spawner n = 
+    if (!currMaxIndex) = 0 then
+      workingArr.(0)
+    else 
+      (multi_join (multi_create f n);
+       multi_join 
+         (multi_create (fun i -> workingArrCopy.(i) <- workingArr.(i)) n);
+       currMaxIndex := ((!currMaxIndex) / 2);
+       spawner (half ((!currMaxIndex)+1))) 
+  in
+  spawner (half ((!currMaxIndex)+1))
     
-  
+let map_reduce l e n s = reduce n e (map l s)
+
+let flatten ss = reduce append (empty ()) ss
