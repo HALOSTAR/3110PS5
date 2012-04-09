@@ -1,5 +1,5 @@
-open Complex
-open Str
+open Complex;;
+open Str;;
 
 let mul = Complex.mul
 let pow = Complex.pow
