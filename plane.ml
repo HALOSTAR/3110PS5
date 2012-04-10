@@ -20,6 +20,9 @@ let s_compare a b = if a > b then 1 else if a = b then 0 else -1
 
 let s_to_string = string_of_float
 
+let point_to_string (x,y) = 
+  "("^(s_to_string x)^", "^(s_to_string y)^")"
+
 let v_plus (a,b)(c,d) = (s_plus a c, s_plus b d)
 
 let distance = s_dist
