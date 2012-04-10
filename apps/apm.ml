@@ -86,4 +86,121 @@ let print_matches (n : string) ((p, ps) : profile * (float * profile) list) : un
  * The number of matches desired is in location 1.  The first and last name
  * of the (human) client are in location 2 and 3, respectively.  The client's
  * profile must be in the profiles file.  Results are output to stdout. *)
-let matchme (args : string array) : unit = failwith "Implement me!"
+
+let split_lines = Str.split (Str.regexp "[\n]+")
+
+let getAll lines = List.fold_left (fun a x -> (convert x)::a ) [] lines
+
+let ageScore p1 p2 = if p1.age <= p2.hi_agepref && p1.age >= p2.lo_agepref && 
+                        p2.age <= p1.hi_agepref && p2.age >= p1.lo_agepref then
+                            0.1 else 0.0
+
+let proScore p1 p2 = if not (p1.profession = p2.profession) then 0.1 else 0.0
+
+let kidScore p1 p2 = if (p1.has_children && p2.wants_children) ||
+(p2.has_children && p1.wants_children)
+                    then 0.1 else 0.0
+
+let leisureScore p1 p2 = if p1.leisure = p2.leisure then 0.1 else 0.0
+
+let drinkScore p1 p2 = if p1.drinks = p2.drinks then 0.1 else 0.0
+
+let smokeScore p1 p2 = if p1.smokes = p2.smokes then 0.1 else 0.0
+
+let musicScore p1 p2 = if p1.music = p2.music then 0.1 else 0.0
+
+let buildScore p1 p2 = match ((p1.sex, p2.sex), (p1.build, p2.build)) with
+        (("M","M"),(b1,b2)) -> if b1 = b2 then 0.2 else 0.0
+        (("F","M"),(b1,b2)) -> if not (b1 = b2) then 0.1 else 0.0
+        (("M","F"),(b1,b2)) -> if not (b1 = b2) then 0.1 else 0.0
+        (("F","F"),(b1,b2)) -> if (b1 = b2) then 0.2 else 0.0
+        
+let heightScore p1 p2 = match ((p1.sex, p2.sex), (p1.build, p2.build)) with
+        (("M","M"),(b1,b2)) -> if b1 = b2 then 0.1 else 0.0
+        (("F","M"),(b1,b2)) -> if not (b1 = b2) then 0.1 else 0.0
+        (("M","F"),(b1,b2)) -> if not (b1 = b2) then 0.1 else 0.0
+        (("F","F"),(b1,b2)) -> if (b1 = b2) then 0.1 else 0.0
+
+
+
+let calc p1 p2 = 
+    let sum = 0.0 in 
+    if p1.orientation = "straight" && p2.orientation = "straight" && not (p1.sex = p2.sex) then 
+        let sum = sum +. ageScore p1 p2 in
+        let sum = sum +. proScore p1 p2 in
+        let sum = sum +. kidScore p1 p2 in
+        let sum = sum +. leisureScore p1 p2 in 
+        let sum = sum +. drinkScore p1 p2 in 
+        let sum = sum +. smokeScore p1 p2 in
+        let sum = sum +. musicScore p1 p2 in
+        let sum = sum +. buildScore p1 p2 in 
+        sum +. heightScore p1 p2 else if 
+            p1.orientation = "gay/lesbian" && p2.orientation ="gay/lesbian" && (p1.sex = p2.sex) 
+        then let sum = sum +. ageScore p1 p2 in
+        let sum = sum +. proScore p1 p2 in
+        let sum = sum +. kidScore p1 p2 in
+        let sum = sum +. leisureScore p1 p2 in 
+        let sum = sum +. drinkScore p1 p2 in 
+        let sum = sum +. smokeScore p1 p2 in
+        let sum = sum +. musicScore p1 p2 in
+        let sum = sum +. buildScore p1 p2 in 
+        sum +. heightScore p1 p2 else 0.0
+        
+
+let cmp (s1,n1) (s2,n2) = if s1 < s2 then -1 else if s1 = s2 then 0 else 1
+    
+let dmmy = { 
+  firstname = "";
+  lastname = "";
+  sex = "";
+  age = 0;
+  lo_agepref = 0 ;
+  hi_agepref = 0;
+  profession = "";
+  has_children =false;
+  wants_children =false;
+  leisure = "";
+  drinks = false;
+  smokes =false;
+  music = "";
+  orientation = "";
+  build = "";
+  height =""
+   }
+
+let getFirst n seq =
+    let sa =(Array.sort cmp seq) in 
+    let bk = Array.make n dmmy in 
+    for i = 0 to n do 
+        bk.(i) = sa.(i)
+    done
+
+let getFirst2 n seq =
+    let sa =(Array.sort cmp seq) in 
+    let bk = Array.make (n+1) dmmy in 
+    for i = 0 to n do 
+        bk.(i) = sa.(i)
+    done
+
+(* the plist should filter out the p him/herself*)
+let matchH n p plist : float*profile list = 
+    let resm = (map (fun x -> Array.make 1 (calc p x, x)) plist) in
+    let n_plus  = Array.make n+1 (-1.0,dmmy) in
+    reduce (fun a x -> (Array.sort (a.(n) <- x.(0) ) cmp)  ) n_plus resm 
+
+let matchme (args : string array) : unit = 
+    let file = args.(0) in 
+    let n = args.(1) in
+    let first = args.(2) in
+    let last = args.(3) in
+    let fl = read_whole_file file in
+    let lines = split_lines fl in
+    let pros = getAll lines in 
+    let plist = List.filter (fun x -> not ((x.firstname = first) && (x.lastname =
+        last))) pros in
+    let p =  List.filter (fun x -> ((x.firstname = first) && (x.lastname =
+        last))) pros in
+    if List.length p = 0 then failwith "Profile not found" else 
+       let p = List.hd p in 
+       let r = (n, (p, matchH n p plist)) in
+       print_reduce r
