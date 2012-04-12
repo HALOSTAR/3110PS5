@@ -27,18 +27,17 @@ let getFour bbox =
 (* [quarters box]: Divide a bounding box into 4 equally sized quadrants. *)
 let quarters (box:bbox) : bbox Sequence.t = 
     let l = getFour box in
-    List.fold_left (fun a x -> cons x a) (empty()) (List.rev l)
+    List.fold_left (fun a x -> cons x a) empty() (List.rev l)
     
 
 (* [psuedobody bodies]: Return a psuedobody representing all bodies in [bodies]  *)
 let pseudobody (bodies:body Sequence.t) : body = 
-    let sum = ref (0., (0., 0.), (0.,0.)) in
+    let sum = ref (0., (0., 0.), 0.) in
     for i = (length bodies)-1 downto 0 do
         let (sm, (sx, sy), v) = !sum in
         let (m,(x,y),v) = (nth bodies i) in
-        let sm = sm +. m and 
-	    sl = (sx+.(m*.x), sy+.(m*.y)) in
-        sum := (sm, sl, v)
+        let sm = sm +. m and sl = (sx+.(m*.x), sy+.(m*.y)) in
+        sum := (sm, sl ,v)
     done;
     let (m,(mx, my),v) = !sum in
     (m, (mx/.m, my/.m), v)
