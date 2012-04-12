@@ -15,7 +15,7 @@ APPS=sequence.mli sequence.ml \
 	apps/main_apps.ml
 
 nbody: $(SOURCES)
-	ocamlc -thread -o nbody unix.cma threads.cma str.cma $(SOURCES)
+	ocamlc -thread -o nbody unix.cma threads.cma $(SOURCES)
 
 seqapps: $(APPS)
 	ocamlc -thread -o seqapps -I apps/ unix.cma str.cma threads.cma $(APPS)

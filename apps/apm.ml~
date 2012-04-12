@@ -125,7 +125,7 @@ let heightScore p1 p2 = match ((p1.sex, p2.sex), (p1.build, p2.build)) with
 
 let calc p1 p2 = 
     let sum = 0.0 in 
-    if p1.orientation = "straight" && p2.orientation = "straight" &&  p1.sex <> p2.sex then 
+    if p1.orientation = "straight" && p2.orientation = "straight" && not (p1.sex = p2.sex) then 
         let sum = sum +. ageScore p1 p2 in
         let sum = sum +. proScore p1 p2 in
         let sum = sum +. kidScore p1 p2 in

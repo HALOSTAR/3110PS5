@@ -45,4 +45,4 @@ let main =
   run_simulation
     (Naive_nbody.make_simulation orbit_bodies)
     500 
-    "output/orbit-naive.txt"
+    "output/orbit-naive.txt";

@@ -4,6 +4,21 @@ let origin = (0.,0.)
 let testM = 90000000000.
 let std_theta = 42.
 
+let custom_bodies = 
+  let mas = function
+    | 0 -> testM
+    | 1 -> testM /. 1000000. 
+    | _ -> testM /. 1000. in
+  let pos = function
+    | 0 -> (0., 0.)
+    | 1 -> (20., 0.) 
+    | _ -> ((-5.), 0.) in
+  let vel = function
+    | 0 -> (0., 0.) 
+    | 1 -> (0., 0.01) 
+    | _ -> (0., (-5.)) in
+  Sequence.tabulate (fun n -> (mas n, pos n, vel n)) 2
+  
 (* 10 bodies in a straight line. Initial velocity = 0 *)
 let lineup_bodies =
   let m = testM in
