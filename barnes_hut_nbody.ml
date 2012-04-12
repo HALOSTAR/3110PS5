@@ -1,4 +1,5 @@
 open Common_nbody
+open Sequence
 
 (* Representation of a 2d rectangular plane *)
 type bbox = { north_west:Plane.point; south_east:Plane.point }
@@ -25,7 +26,7 @@ let getFour bbox =
 
 (* [quarters box]: Divide a bounding box into 4 equally sized quadrants. *)
 let quarters (box:bbox) : bbox Sequence.t = 
-    let l = getFour bbox in
+    let l = getFour box in
     List.fold_left (fun a x -> cons x a) empty() (List.rev l)
     
 
@@ -41,7 +42,7 @@ let pseudobody (bodies:body Sequence.t) : body =
     let (m,(mx, my),v) = !sum in
     (m, (mx/.m, my/.m), v)
 
-exception outException
+(*exception outException ;; *)
 
 let ifIn b bb = 
     let (m, (x,y), v) = b in
@@ -131,7 +132,8 @@ let calcBox bodies =
     in
     let ys = toSortedArr (map (fun e -> let (m,(x,y),v) = e in y) bodies) cmpnx
     in
-    let nwx = xs.(0) and nwy = ys.(len-1) and sex = xs.(len-1) and sey = ys.(0) 
+    let nwx = xs.(0) and nwy = ys.(len-1) and sex = xs.(len-1) and sey = ys.(0)
+    in
     {north_west = (nwx,nwy); south_east = (sex,sey)}
 
 (* [update bodies theta box]: update the positions of all bodies in [bodies] via
