@@ -186,7 +186,6 @@ let reduce c b s =
   in
   spawner (half ((!currMaxIndex)+1))
     
-(* map_reduce mapFunc reduceBase reduceFunc originalSequence *)
 let map_reduce l e n s = reduce n e (map l s)
 
 let flatten ss = reduce append (empty ()) ss

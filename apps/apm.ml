@@ -62,26 +62,22 @@ let print_profile ({
      height = height } : profile) : unit =
   Printf.printf "%s %s\n" firstname lastname;
   Printf.printf "  sex: %s  age: %d  profession: %s\n" sex age profession;
-  Printf.printf "  %s  %s\n" 
-    (if drinks then "social drinker" else "nondrinker") 
-    (if smokes then "smoker" else "nonsmoker");
+  Printf.printf "  %s  %s\n" (if drinks then "social drinker" else "nondrinker") (if smokes then "smoker" else "nonsmoker");
   Printf.printf "  %s  %s\n"
     (if has_children then "has children" else "no children")
     (if wants_children then "wants children" else "does not want children");
   Printf.printf "  prefers a %s partner between the ages of %d and %d\n"
-    (if (orientation="straight" && sex="F") 
-       || (orientation = "gay/lesbian" && sex="M") then "male" else "female")
+    (if (orientation="straight" && sex="F") || (orientation = "gay/lesbian" && sex="M") then "male" else "female")
     lo_agepref hi_agepref;
   Printf.printf "  likes %s music and %s\n" music leisure
 
 
-let print_matches (n : string) ((p, ps) : profile * (float * profile) list) =
+let print_matches (n : string) ((p, ps) : profile * (float * profile) list) : unit =
   print_string "------------------------------\nClient: ";
   print_profile p;
   Printf.printf "\n%s best matches:\n" n;
   List.iter (fun (bci, profile) ->
-    Printf.printf "------------------------------\nCompatibility index: %f\n" 
-      bci; print_profile profile) ps;
+    Printf.printf "------------------------------\nCompatibility index: %f\n" bci; print_profile profile) ps;
   print_endline ""
 
 
@@ -118,21 +114,19 @@ let buildScore p1 p2 = match ((p1.sex, p2.sex), (p1.build, p2.build)) with
     |(("F","M"),(b1,b2)) -> if not (b1 = b2) then 0.1 else 0.0
     |(("M","F"),(b1,b2)) -> if not (b1 = b2) then 0.1 else 0.0
     |(("F","F"),(b1,b2)) -> if (b1 = b2) then 0.2 else 0.0
-    | _ -> failwith "error me babe!"
+    | _ -> failwith "sorry, please come again"
         
 let heightScore p1 p2 = match ((p1.sex, p2.sex), (p1.build, p2.build)) with
     |(("M","M"),(b1,b2)) -> if b1 = b2 then 0.1 else 0.0
     |(("F","M"),(b1,b2)) -> if not (b1 = b2) then 0.1 else 0.0
     |(("M","F"),(b1,b2)) -> if not (b1 = b2) then 0.1 else 0.0
     |(("F","F"),(b1,b2)) -> if (b1 = b2) then 0.1 else 0.0
-    | _ -> failwith "well, this is awkward."
-
+    | _ -> failwith "awk hawk"
 
 
 let calc p1 p2 = 
     let sum = 0.0 in 
-    if p1.orientation = "straight" 
-      && p2.orientation = "straight" &&  p1.sex <> p2.sex then 
+    if p1.orientation = "straight" && p2.orientation = "straight" && not (p1.sex = p2.sex) then 
         let sum = sum +. ageScore p1 p2 in
         let sum = sum +. proScore p1 p2 in
         let sum = sum +. kidScore p1 p2 in
@@ -141,9 +135,8 @@ let calc p1 p2 =
         let sum = sum +. smokeScore p1 p2 in
         let sum = sum +. musicScore p1 p2 in
         let sum = sum +. buildScore p1 p2 in 
-        sum +. heightScore p1 p2 
-    else if p1.orientation = "gay/lesbian" 
-      && p2.orientation ="gay/lesbian" && (p1.sex = p2.sex) 
+        sum +. heightScore p1 p2 else if 
+            p1.orientation = "gay/lesbian" && p2.orientation ="gay/lesbian" && (p1.sex = p2.sex) 
         then let sum = sum +. ageScore p1 p2 in
         let sum = sum +. proScore p1 p2 in
         let sum = sum +. kidScore p1 p2 in
@@ -155,7 +148,7 @@ let calc p1 p2 =
         sum +. heightScore p1 p2 else 0.0
         
 
-let cmp (s1,n1) (s2,n2) = if s1 < s2 then -1 else if s1 = s2 then 0 else 1
+(*let cmp (s1,n1) (s2,n2) = if s1 < s2 then -1 else if s1 = s2 then 0 else 1*)
     
 let dmmy = { 
   firstname = "";
@@ -176,13 +169,22 @@ let dmmy = {
   height =""
    }
 
+let cmp a b = let (sc1, x1) = a and (sc2,x2) = b in if (sc1 > sc2 ) then -1 else 
+    if (sc1=sc2 ) then 0 else 1
 
 (* the plist should filter out the p him/herself*)
 let matchH n p plist : (float*profile) list = 
-    let resm = (map (fun x -> Array.make 1 (calc p x, x)) plist) in
-    let n_plus  = Array.make (n+1) (-1.0,dmmy) in
-    Array.to_list (reduce (fun a x -> (Array.sort cmp (a.(n) <- x.(0); a)); a )
-    n_plus resm) 
+    let resm = (map (fun x -> (calc p x, x)) plist) in
+    let bucket = Array.make (length plist) (-1.0, dmmy) in
+    for i = 0 to (length plist)-1 do 
+        bucket.(i) <- nth resm i;
+    done;
+    Array.sort cmp bucket;
+    let result = Array.make n (-1.0,dmmy) in
+    for i = 0 to n-1 do 
+        result.(i) <- bucket.(i);
+    done;
+    (Array.to_list result)
 
 let matchme (args : string array) : unit = 
     let file = args.(0) in 
@@ -192,8 +194,7 @@ let matchme (args : string array) : unit =
     let fl = read_whole_file file in
     let lines = split_lines fl in
     let pros = getAll lines in 
-    let plist = List.filter 
-      (fun x -> not ((x.firstname = first) && (x.lastname =
+    let plist = List.filter (fun x -> not ((x.firstname = first) && (x.lastname =
         last))) pros in
     let plis = List.fold_left (fun a x -> cons x a) (empty()) plist in
     let p =  List.filter (fun x -> ((x.firstname = first) && (x.lastname =
@@ -202,3 +203,4 @@ let matchme (args : string array) : unit =
        let p = List.hd p in 
        let r = (n, (p, matchH (int_of_string n) p plis)) in
        print_matches (first^" "^last) (snd r);
+

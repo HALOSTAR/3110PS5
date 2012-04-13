@@ -147,7 +147,7 @@ let calc p1 p2 =
         sum +. heightScore p1 p2 else 0.0
         
 
-let cmp (s1,n1) (s2,n2) = if s1 < s2 then -1 else if s1 = s2 then 0 else 1
+(*let cmp (s1,n1) (s2,n2) = if s1 < s2 then -1 else if s1 = s2 then 0 else 1*)
     
 let dmmy = { 
   firstname = "";
@@ -168,13 +168,23 @@ let dmmy = {
   height =""
    }
 
+let cmp a b = let (sc1, x1) = a and (sc2,x2) = b in if (sc1 > sc2 ) then -1 else 
+    if (sc1=sc2 ) then 0 else 1
 
 (* the plist should filter out the p him/herself*)
 let matchH n p plist : (float*profile) list = 
-    let resm = (map (fun x -> Array.make 1 (calc p x, x)) plist) in
+    let resm = (map (fun x -> (calc p x, x)) plist) in
     let n_plus  = Array.make (n+1) (-1.0,dmmy) in
-    Array.to_list (reduce (fun a x -> (Array.sort cmp (a.(n) <- x.(0); a)); a )
-    n_plus resm) 
+    let bucket = Array.make (length plist) (-1.0, dmmy) in
+    for i = 0 to (length plist)-1 do 
+        bucket.(i) <- nth resm i;
+    done;
+    Array.sort cmp bucket;
+    let result = Array.make n (-1.0,dmmy) in
+    for i = 0 to n-1 do 
+        result.(i) <- bucket.(i);
+    done;
+    (Array.to_list result)
 
 let matchme (args : string array) : unit = 
     let file = args.(0) in 
@@ -193,3 +203,4 @@ let matchme (args : string array) : unit =
        let p = List.hd p in 
        let r = (n, (p, matchH (int_of_string n) p plis)) in
        print_matches (first^" "^last) (snd r);
+

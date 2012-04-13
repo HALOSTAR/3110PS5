@@ -23,8 +23,8 @@ let accelerations (bodies:body Sequence.t) : Plane.vector Sequence.t =
     let mapF b = acceleration currBody b in
     accels := cons (map_reduce mapF (0.,0.) v_plus bodies) !accels
   done;
-  !accels
-      
+  !accels      
+
 (* [update bodies]: apply acceleration to update the positions & velocities
  * of all bodies in [bodies] *)
 let update (bodies:body Sequence.t) : body Sequence.t = 
